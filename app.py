@@ -292,7 +292,7 @@ else:
     st.write("Steamアカウントと連携して、積み上げられたままのゲームを可視化します。")
     login_url = get_steam_login_url()
     st.markdown(
-        f'<a href="{login_url}" target="_self">'
+        f'<a href="{login_url}" target="_self" rel="noreferrer">'
         f'<button style="background-color: #171a21; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; font-weight: bold;">'
         f'Steamでログイン</button></a>',
         unsafe_allow_html=True
