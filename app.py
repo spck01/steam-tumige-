@@ -147,7 +147,13 @@ if st.session_state.pop("login_error", False):
 # ログイン後の画面
 if st.session_state.steam_id:
     st.success(f"✅ ログイン中 (SteamID: {st.session_state.steam_id})")
-    
+
+    with st.expander("ℹ️ うまく取得できない場合"):
+        st.markdown("""
+Steamプロフィールの「ゲームの詳細」が非公開になっていると、ゲーム情報を取得できません。
+Steamの「プロフィールを編集」＞「プライバシー設定」から、**「ゲームの詳細」を公開**にしてから再度お試しください。
+        """)
+
     if st.button("自分の積みゲーを可視化する！", type="primary"):
         now = time.time()
         if now - st.session_state.get("last_run_time", 0) < COOLDOWN_SECONDS:
