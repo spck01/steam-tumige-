@@ -15,7 +15,7 @@ import io
 # ==========================================
 APP_URL = "https://steam-tsumige.streamlit.app/"
 API_KEY = st.secrets["STEAM_API_KEY"] # secrets.tomlからAPIキーを読み込む
-TSUMI_THRESHOLD_MINUTES = 180 # 「積みゲー」と判定するプレイ時間の上限（3時間）
+TSUMI_THRESHOLD_MINUTES = 300 # 「積みゲー」と判定するプレイ時間の上限（5時間）
 COOLDOWN_SECONDS = 5 # 「可視化する」ボタンの連打防止インターバル
 
 st.set_page_config(page_title="積みゲー晒しジェネレーター", page_icon="📦")
