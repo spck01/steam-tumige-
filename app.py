@@ -248,6 +248,8 @@ if st.session_state.steam_id:
                         const tweetText = {json.dumps(tweet_text)};
                         const fallbackUrl = {json.dumps(tweet_url)};
 
+                        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
                         document.getElementById('shareBtn').addEventListener('click', async () => {{
                             try {{
                                 const byteChars = atob(b64Data);
@@ -256,13 +258,26 @@ if st.session_state.steam_id:
                                     byteNumbers[i] = byteChars.charCodeAt(i);
                                 }}
                                 const byteArray = new Uint8Array(byteNumbers);
-                                const file = new File([byteArray], "steam_tsumige.png", {{ type: "image/png" }});
 
-                                if (navigator.canShare && navigator.canShare({{ files: [file] }})) {{
-                                    await navigator.share({{ files: [file], text: tweetText }});
-                                }} else {{
+                                // スマホ：OSの共有シート経由でX等に画像+テキストを渡す
+                                if (isMobile) {{
+                                    const file = new File([byteArray], "steam_tsumige.png", {{ type: "image/png" }});
+                                    if (navigator.canShare && navigator.canShare({{ files: [file] }})) {{
+                                        await navigator.share({{ files: [file], text: tweetText }});
+                                        return;
+                                    }}
+                                }}
+
+                                // PC：Xの共有シートに使えるアプリが無いため、画像をクリップボードにコピーしてXの投稿画面を開く
+                                try {{
+                                    const blob = new Blob([byteArray], {{ type: "image/png" }});
+                                    await navigator.clipboard.write([new ClipboardItem({{ "image/png": blob }})]);
                                     window.open(fallbackUrl, "_blank");
-                                    alert("この端末では画像の自動共有に対応していないため、Xの投稿画面のみ開きます。画像は手動で添付してください。");
+                                    alert("画像をクリップボードにコピーしました。Xの投稿画面で Ctrl+V（Macは⌘+V）を押して貼り付けてください。");
+                                }} catch (clipErr) {{
+                                    console.error(clipErr);
+                                    window.open(fallbackUrl, "_blank");
+                                    alert("この端末では画像の自動コピーに対応していないため、Xの投稿画面のみ開きます。画像は手動で添付してください。");
                                 }}
                             }} catch (err) {{
                                 if (err.name !== 'AbortError') {{
