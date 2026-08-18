@@ -291,32 +291,13 @@ if st.session_state.steam_id:
 else:
     st.write("Steamアカウントと連携して、積み上げられたままのゲームを可視化します。")
     login_url = get_steam_login_url()
-    # Streamlit本体のボタンクリック処理から独立させるため、iframe(components.html)内にリンクを描画する
-    login_html = f"""
-    <style>
-        html, body {{
-            margin: 0;
-            padding: 0;
-            background: transparent;
-        }}
-        a#loginBtn {{
-            display: block;
-            box-sizing: border-box;
-            background-color: #171a21;
-            color: white;
-            text-decoration: none;
-            text-align: center;
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 5px;
-            font-weight: bold;
-            font-family: "Source Sans Pro", sans-serif;
-            width: fit-content;
-        }}
-    </style>
-    <a id="loginBtn" href="{login_url}" target="_top" rel="noreferrer">Steamでログイン</a>
-    """
-    components.html(login_html, height=45)
+    st.markdown(
+        f'<a href="{login_url}" rel="noreferrer" '
+        f'style="display:inline-block; background-color:#171a21; color:white; text-decoration:none; '
+        f'padding:10px 20px; font-size:16px; border-radius:5px; font-weight:bold;">'
+        f'Steamでログイン</a>',
+        unsafe_allow_html=True
+    )
 
     with st.expander("🔒 プライバシーポリシー"):
         st.markdown("""
