@@ -241,8 +241,20 @@ if st.session_state.steam_id:
                             #shareBtn:active {{
                                 background-color: #222222;
                             }}
+                            #copyMsg {{
+                                display: none;
+                                margin-top: 0.5rem;
+                                padding: 0.5rem 0.75rem;
+                                border-radius: 0.5rem;
+                                background-color: #d1f4e0;
+                                color: #0f5132;
+                                font-size: 14px;
+                                font-family: "Source Sans Pro", sans-serif;
+                                line-height: 1.4;
+                            }}
                         </style>
                         <button id="shareBtn">𝕏 で罪を告白する</button>
+                        <div id="copyMsg"></div>
                         <script>
                         const b64Data = "{b64_img}";
                         const tweetText = {json.dumps(tweet_text)};
@@ -269,15 +281,18 @@ if st.session_state.steam_id:
                                 }}
 
                                 // PC：Xの共有シートに使えるアプリが無いため、画像をクリップボードにコピーしてXの投稿画面を開く
+                                const msgEl = document.getElementById('copyMsg');
                                 try {{
                                     const blob = new Blob([byteArray], {{ type: "image/png" }});
                                     await navigator.clipboard.write([new ClipboardItem({{ "image/png": blob }})]);
+                                    msgEl.textContent = "✅ 画像をコピーしました。開いたXのタブで Ctrl+V（Macは⌘+V）で貼り付けてください。";
+                                    msgEl.style.display = "block";
                                     window.open(fallbackUrl, "_blank");
-                                    alert("画像をクリップボードにコピーしました。Xの投稿画面で Ctrl+V（Macは⌘+V）を押して貼り付けてください。");
                                 }} catch (clipErr) {{
                                     console.error(clipErr);
+                                    msgEl.textContent = "⚠️ この端末では画像の自動コピーに対応していないため、画像は手動で添付してください。";
+                                    msgEl.style.display = "block";
                                     window.open(fallbackUrl, "_blank");
-                                    alert("この端末では画像の自動コピーに対応していないため、Xの投稿画面のみ開きます。画像は手動で添付してください。");
                                 }}
                             }} catch (err) {{
                                 if (err.name !== 'AbortError') {{
@@ -287,7 +302,7 @@ if st.session_state.steam_id:
                         }});
                         </script>
                         """
-                        components.html(share_html, height=45)
+                        components.html(share_html, height=100)
                 else:
                     st.success("素晴らしい！積みゲーは1本もありませんでした！🎉")
             else:
