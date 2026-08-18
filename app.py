@@ -206,7 +206,7 @@ if st.session_state.steam_id:
                         
                     with col2:
                         # 3. 定型文とXの投稿URL（Web Share API非対応時のフォールバック用）
-                        tweet_text = f"私のSteam所持ゲーム{game_count}本のうち、積みゲー（10時間以下）は【{tsumi_count}本】でした😇\nいつかやります…！\n#積みゲー晒し #Steam "
+                        tweet_text = f"私のSteam所持ゲーム{game_count}本のうち、積みゲー（10時間以下）は【{tsumi_count}本】でした😇\nいつかやります…！\n#積みゲー晒し\n{APP_URL}"
                         tweet_url = f"https://twitter.com/intent/tweet?text={urllib.parse.quote(tweet_text)}"
 
                         # 4. 画像をBase64化してJSに渡す（Web Share APIで画像を直接共有する）
