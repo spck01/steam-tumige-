@@ -13,7 +13,7 @@ import io
 # ==========================================
 # 1. アプリの設定
 # ==========================================
-APP_URL = "https://weed-animation-snap-evanescence.trycloudflare.com/"
+APP_URL = "https://steam-tsumige.streamlit.app/"
 API_KEY = st.secrets["STEAM_API_KEY"] # secrets.tomlからAPIキーを読み込む
 TSUMI_THRESHOLD_MINUTES = 600 # 「積みゲー」と判定するプレイ時間の上限（10時間）
 COOLDOWN_SECONDS = 5 # 「可視化する」ボタンの連打防止インターバル
