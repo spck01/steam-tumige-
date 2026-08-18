@@ -318,7 +318,7 @@ if st.session_state.steam_id:
         st.session_state.steam_id = None
         st.rerun()
 else:
-    st.write("Steamアカウントと連携して、積み上げられたままのゲームを可視化します。")
+    st.write("Steamアカウントと連携して、積み上げられたままのゲームを可視化します。  \nニゲテハナラナイ…")
     login_url = get_steam_login_url()
     st.markdown(
         f'<a href="{login_url}" rel="noreferrer" '
