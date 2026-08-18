@@ -5,6 +5,7 @@ import re
 import json
 import base64
 import time
+import os
 import requests
 from PIL import Image
 from io import BytesIO
@@ -17,8 +18,37 @@ APP_URL = "https://steam-tsumige.streamlit.app/"
 API_KEY = st.secrets["STEAM_API_KEY"] # secrets.tomlからAPIキーを読み込む
 TSUMI_THRESHOLD_MINUTES = 300 # 「積みゲー」と判定するプレイ時間の上限（5時間）
 COOLDOWN_SECONDS = 5 # 「可視化する」ボタンの連打防止インターバル
+APP_DESCRIPTION = "Steamアカウントと連携して、積み上げられたままのゲームを可視化・シェアできるアプリです。"
 
 st.set_page_config(page_title="積みゲー晒しジェネレーター", page_icon="📦")
+
+def _patch_ogp_meta_tags():
+    """StreamlitのHTMLにOGPタグを非公式に挿入する（X等でのリンクプレビュー改善用）。
+    インストール済みindex.htmlを直接書き換える非公式な手法のため、失敗しても無視する。"""
+    try:
+        index_path = os.path.join(os.path.dirname(st.__file__), "static", "index.html")
+        with open(index_path, "r", encoding="utf-8") as f:
+            html = f.read()
+
+        if "og:title" in html:
+            return  # 既にパッチ済み
+
+        og_tags = f'''
+    <meta property="og:title" content="積みゲー晒しジェネレーター" />
+    <meta property="og:description" content="{APP_DESCRIPTION}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{APP_URL}" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="積みゲー晒しジェネレーター" />
+    <meta name="twitter:description" content="{APP_DESCRIPTION}" />
+'''
+        html = html.replace("</head>", og_tags + "</head>")
+        with open(index_path, "w", encoding="utf-8") as f:
+            f.write(html)
+    except Exception:
+        pass
+
+_patch_ogp_meta_tags()
 
 # ==========================================
 # 2. 内部関数の定義
@@ -334,9 +364,20 @@ else:
         unsafe_allow_html=True
     )
 
+    with st.expander("📜 利用規約・免責事項"):
+        st.markdown("""
+- 本サービスは、Valve Corporationおよび Steam とは無関係の**非公式ツール**です。
+- 本サービスは**現状有姿（AS-IS）で無償提供**されており、動作の完全性・正確性・継続性について保証しません。
+- 本サービスの利用により生じたいかなる損害についても、運営者は責任を負いません。
+- 予告なく本サービスの内容変更・提供の中断・終了を行う場合があります。
+- 本サービスの利用にあたっては、Steamをはじめとする関連サービスの利用規約を遵守してください。
+        """)
+
     with st.expander("🔒 プライバシーポリシー"):
         st.markdown("""
 **このサービスは、Valve Corporationとは無関係の非公式ツールです。**
+
+*最終更新日：2026-08-18*
 
 #### ログインについて
 - **パスワードは一切入力しません。** ログインボタンはSteam公式サイト（steamcommunity.com）に移動するだけで、認証はSteamの画面上で直接行われます（OpenID方式）。IDやパスワードが本アプリを経由・通過することはありません。
