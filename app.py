@@ -15,7 +15,7 @@ import io
 # ==========================================
 APP_URL = "https://steam-tsumige.streamlit.app/"
 API_KEY = st.secrets["STEAM_API_KEY"] # secrets.tomlからAPIキーを読み込む
-TSUMI_THRESHOLD_MINUTES = 600 # 「積みゲー」と判定するプレイ時間の上限（10時間）
+TSUMI_THRESHOLD_MINUTES = 180 # 「積みゲー」と判定するプレイ時間の上限（3時間）
 COOLDOWN_SECONDS = 5 # 「可視化する」ボタンの連打防止インターバル
 
 st.set_page_config(page_title="積みゲー晒しジェネレーター", page_icon="📦")
@@ -166,7 +166,7 @@ if st.session_state.steam_id:
                 games = api_data["response"]["games"]
                 game_count = api_data["response"]["game_count"]
                 
-                # 【変更点】プレイ時間10時間（600分）以下のゲームだけを抽出
+                # 【変更点】プレイ時間がTSUMI_THRESHOLD_MINUTES以下のゲームだけを抽出
                 tsumi_games = [g for g in games if g.get('playtime_forever', 0) <= TSUMI_THRESHOLD_MINUTES]
                 tsumi_count = len(tsumi_games)
                 tsumi_ratio = (tsumi_count / game_count * 100) if game_count else 0
@@ -208,7 +208,7 @@ if st.session_state.steam_id:
                         st.caption("📋 PCの場合：押すと画像を自動コピーしてXの投稿画面を開きます。開いたXのタブで Ctrl+V（Macは⌘+V）を押して貼り付けてください。")
 
                         # 3. 定型文とXの投稿URL（Web Share API非対応時のフォールバック用）
-                        tweet_text = f"私のSteam所持ゲーム{game_count}本のうち、積みゲー（10時間以下）は【{tsumi_count}本】でした😇\nいつかやります…！\n#積みゲー晒し\n{APP_URL}"
+                        tweet_text = f"私のSteam所持ゲーム{game_count}本のうち、積みゲー（{TSUMI_THRESHOLD_MINUTES // 60}時間以下）は【{tsumi_count}本】でした😇\nいつかやります…！\n#積みゲー晒し\n{APP_URL}"
                         tweet_url = f"https://twitter.com/intent/tweet?text={urllib.parse.quote(tweet_text)}"
 
                         # 4. 画像をBase64化してJSに渡す（Web Share APIで画像を直接共有する）
