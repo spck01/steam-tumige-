@@ -1,0 +1,127 @@
+# 📦 積みゲー晒しジェネレーター
+
+Steamアカウントと連携し、プレイ時間が短い「積みゲー」を可視化して画像化し、Xでシェアできるアプリです。
+
+公開URL: https://steam-tsumige.streamlit.app/
+
+## 目次
+
+- [概要](#概要)
+- [機能仕様](#機能仕様)
+- [技術スタック](#技術スタック)
+- [Steam連携の仕組み](#steam連携の仕組み)
+- [Xシェア機能の仕組み](#xシェア機能の仕組み)
+- [セキュリティ対策](#セキュリティ対策)
+- [プライバシー・データの取り扱い](#プライバシーデータの取り扱い)
+- [ローカルでの実行方法](#ローカルでの実行方法)
+- [デプロイ](#デプロイ)
+- [既知の制約](#既知の制約)
+
+## 概要
+
+Steamにログインすると、所持ゲームのうち累計プレイ時間が一定以下の「積みゲー」を抽出し、アイコンを並べた画像を自動生成します。生成した画像はダウンロード、またはXへそのままシェアできます。
+
+このサービスは、Valve Corporationとは無関係の非公式ツールです。
+
+## 機能仕様
+
+| 項目 | 内容 |
+|---|---|
+| ログイン | Steam OpenID 2.0によるログイン |
+| 積みゲー判定基準 | 累計プレイ時間が **10時間（600分）以下** のゲーム（`TSUMI_THRESHOLD_MINUTES`で定義） |
+| 表示情報 | 所持ゲーム総数／積みゲー数／積みゲー率 |
+| 画像生成 | 積みゲーをプレイ時間が短い順に並べ、最大64本のアイコンを8×8グリッドで1枚のPNG画像に合成 |
+| 画像保存 | ダウンロードボタンでPNGを端末に保存 |
+| Xシェア | 画像とコメント付きでXの投稿画面を開く（詳細は後述） |
+| 連打防止 | 可視化ボタンに5秒間のクールダウン（`COOLDOWN_SECONDS`） |
+
+## 技術スタック
+
+- [Streamlit](https://streamlit.io/)（Python製Webアプリフレームワーク）
+- [Pillow](https://python-pillow.org/)（画像合成）
+- [Requests](https://requests.readthedocs.io/)（Steam Web APIとの通信）
+- ホスティング: [Streamlit Community Cloud](https://streamlit.io/cloud)（無料枠）
+
+## Steam連携の仕組み
+
+### ログインフロー（OpenID 2.0）
+
+1. 「Steamでログイン」を押すと、Steam公式サイト（`steamcommunity.com/openid/login`）へ遷移し、ユーザーはSteamの画面上で直接ログインする。**IDやパスワードは本アプリを一切経由しない**。
+2. ログイン成功後、Steamはブラウザを本アプリの`APP_URL`へリダイレクトし、`openid.claimed_id`などの署名付きパラメータをクエリ文字列で渡す。
+3. 本アプリ（`verify_steam_login()`, [app.py](app.py)）は、受け取ったパラメータを**そのままSteamに投げ返し**（`openid.mode=check_authentication`）、Steam自身に署名の正当性を検証させる。
+4. Steamのレスポンスに`is_valid:true`が含まれる場合のみ、SteamIDを信頼してログイン状態とする。
+
+この検証ステップにより、URLのクエリパラメータを偽造して任意のSteamIDになりすます攻撃を防いでいる。
+
+### 取得するデータ
+
+- ログイン時：SteamID（公開ID）のみ。パスワード・メールアドレス・支払い情報等はSteam側から一切渡されない。
+- ゲーム情報：Steam公開Web API（`IPlayerService/GetOwnedGames`）から、所持ゲーム名・アイコン・プレイ時間を取得。取得対象ユーザーのSteamプロフィールで「ゲームの詳細」が非公開の場合は取得できない。
+
+### APIキー
+
+Steam Web APIキーは`.streamlit/secrets.toml`（ローカル）またはStreamlit CloudのSecrets設定（本番）にのみ保存され、サーバーサイドの処理でのみ使用する。ブラウザ側に渡ることはない。全ユーザーがこの1つのキーを共有するため、Steam APIの利用上限（1日10万回）に配慮し、連打防止のクールダウンを設けている。
+
+## Xシェア機能の仕組み
+
+Xの投稿画面を開くURL（`intent/tweet`）はテキストとURLのみ対応しており、画像をパラメータで直接添付する仕組みがXには存在しない。そのため、端末に応じてJavaScript（`components.html`で埋め込み）で以下のように挙動を分けている。
+
+- **スマートフォン**: [Web Share API](https://developer.mozilla.org/ja/docs/Web/API/Navigator/share)（`navigator.share`）を使い、OS標準の共有シートに画像とテキストを渡す。共有シートでXを選ぶと、画像添付済みの投稿画面が開く。
+- **PC**: OSの共有パネルにXが登録されていないことが多いため、生成画像を[Clipboard API](https://developer.mozilla.org/ja/docs/Web/API/Clipboard/write)でクリップボードに自動コピーしたうえで、Xの投稿画面を新しいタブで開く。ユーザーは投稿画面で`Ctrl+V`（Macは`⌘+V`）を押すだけで画像を貼り付けられる。
+
+いずれの方式も、画像は**ユーザーの端末のブラウザ内でのみ処理**され、本アプリのサーバーを経由しない。実際に投稿するかはユーザー自身がX側の画面で操作するまで確定せず、自動投稿は行わない。
+
+## セキュリティ対策
+
+| 項目 | 内容 |
+|---|---|
+| OpenID署名検証 | `check_authentication`によるなりすまし防止（前述） |
+| 通信の暗号化 | Steam Web API・アイコン画像取得・アプリ自体すべてHTTPS |
+| APIキーの隠蔽 | サーバーサイドの`st.secrets`経由でのみ参照、クライアントに非公開 |
+| エラー詳細の非表示 | `.streamlit/config.toml`の`client.showErrorDetails = false`により、未処理例外時にコードの中身を利用者に見せない |
+| 通信タイムアウト | Steam Web API呼び出しに`timeout`を設定し、障害時のハングを防止 |
+| 連打防止 | 可視化ボタンに5秒のクールダウンを設け、共有APIキーの浪費・過負荷を軽減 |
+| 匿名利用統計の無効化 | `gatherUsageStats = false`により、Streamlitへのテレメトリ送信を停止 |
+| Secretsの管理 | `.streamlit/secrets.toml`は`.gitignore`で除外し、リポジトリに含めない |
+
+## プライバシー・データの取り扱い
+
+- 取得したSteamIDやゲーム情報を**データベースやファイルとしてサーバーに保存することはない**。ブラウザとの接続が続く間のみメモリ上に保持され、ページを閉じる／ログアウトすると破棄される。
+- 生成画像もサーバーには保存されない。
+- 広告目的のトラッキングCookieや、第三者への行動データ提供は行っていない。
+
+アプリ内の「🔒 プライバシーポリシー」からも同内容を確認できる。
+
+## ローカルでの実行方法
+
+```bash
+# 依存パッケージのインストール
+pip install -r requirements.txt
+```
+
+`.streamlit/secrets.toml`を作成し、Steam Web APIキーを設定する（[Steamキー発行ページ](https://steamcommunity.com/dev/apikey)で取得）。
+
+```toml
+STEAM_API_KEY = "取得したAPIキー"
+```
+
+```bash
+# アプリの起動
+streamlit run app.py
+```
+
+ローカル実行時、Steamログインの`return_to`/`realm`は[app.py](app.py)の`APP_URL`と一致している必要がある（外部公開して動作確認する場合は、一時的にトンネリングツール等でHTTPS URLを払い出し、`APP_URL`をそれに合わせる）。
+
+## デプロイ
+
+[Streamlit Community Cloud](https://share.streamlit.io)（無料）でホスティングしている。
+
+- GitHubリポジトリにpushすると自動で再デプロイされる
+- Steam Web APIキーは、Streamlit CloudのApp Settings → Secretsに設定する（リポジトリには含めない）
+- `APP_URL`は本番の公開URLに一致させる必要がある（Steamログインの`return_to`/`realm`チェックのため）
+
+## 既知の制約
+
+- 全ユーザーで1つのSteam Web APIキーを共有しているため、極端なアクセス集中時はSteam APIのレート制限（1日10万回）に達する可能性がある
+- Streamlit Community Cloudの無料枠は、しばらくアクセスがないとアプリがスリープし、次回アクセス時に起動待ちが発生する
+- アイコン画像は逐次ダウンロードのため、所持ゲーム数が多いと画像生成に数秒〜十数秒かかる
