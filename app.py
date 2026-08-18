@@ -205,6 +205,8 @@ if st.session_state.steam_id:
                         )
                         
                     with col2:
+                        st.caption("📋 PCの場合：押すと画像を自動コピーしてXの投稿画面を開きます。開いたXのタブで Ctrl+V（Macは⌘+V）を押して貼り付けてください。")
+
                         # 3. 定型文とXの投稿URL（Web Share API非対応時のフォールバック用）
                         tweet_text = f"私のSteam所持ゲーム{game_count}本のうち、積みゲー（10時間以下）は【{tsumi_count}本】でした😇\nいつかやります…！\n#積みゲー晒し\n{APP_URL}"
                         tweet_url = f"https://twitter.com/intent/tweet?text={urllib.parse.quote(tweet_text)}"
@@ -281,19 +283,16 @@ if st.session_state.steam_id:
                                 }}
 
                                 // PC：Xの共有シートに使えるアプリが無いため、画像をクリップボードにコピーしてXの投稿画面を開く
-                                const msgEl = document.getElementById('copyMsg');
                                 try {{
                                     const blob = new Blob([byteArray], {{ type: "image/png" }});
                                     await navigator.clipboard.write([new ClipboardItem({{ "image/png": blob }})]);
-                                    msgEl.textContent = "✅ 画像をコピーしました。開いたXのタブで Ctrl+V（Macは⌘+V）で貼り付けてください。";
-                                    msgEl.style.display = "block";
-                                    window.open(fallbackUrl, "_blank");
                                 }} catch (clipErr) {{
                                     console.error(clipErr);
+                                    const msgEl = document.getElementById('copyMsg');
                                     msgEl.textContent = "⚠️ この端末では画像の自動コピーに対応していないため、画像は手動で添付してください。";
                                     msgEl.style.display = "block";
-                                    window.open(fallbackUrl, "_blank");
                                 }}
+                                window.open(fallbackUrl, "_blank");
                             }} catch (err) {{
                                 if (err.name !== 'AbortError') {{
                                     console.error(err);
@@ -302,7 +301,7 @@ if st.session_state.steam_id:
                         }});
                         </script>
                         """
-                        components.html(share_html, height=100)
+                        components.html(share_html, height=80)
                 else:
                     st.success("素晴らしい！積みゲーは1本もありませんでした！🎉")
             else:
