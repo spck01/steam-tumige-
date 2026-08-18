@@ -181,13 +181,13 @@ Steamの「プロフィールを編集」＞「プライバシー設定」から
                 m1.metric("🎮 所持ゲーム総数", f"{game_count}本")
                 m2.metric("📦 積みゲー数", f"{tsumi_count}本")
                 m3.metric("💦 積みゲー率", f"{tsumi_ratio:.1f}%")
-                st.caption(f"📏 判定基準：累計プレイ時間が **{TSUMI_THRESHOLD_MINUTES // 60}時間（{TSUMI_THRESHOLD_MINUTES}分）以下** のゲームを「積みゲー」と定義しています。")
+                st.caption(f"📏 判定基準：累計プレイ時間が**{TSUMI_THRESHOLD_MINUTES // 60}時間（{TSUMI_THRESHOLD_MINUTES}分）以下**のゲームを「積みゲー」と定義しています。")
 
                 # 2. 画像の合成（積みゲーリストを渡す）
                 result_image = generate_library_image(tsumi_games, max_games=64)
                 
                 if result_image:
-                    st.image(result_image, caption=f"手付かずのゲームたち (上位 {min(tsumi_count, 64)}本)")
+                    st.image(result_image, caption=f"手付かずのゲームたち（上位 {min(tsumi_count, 64)}本）")
                     st.divider()
 
                     # ==========================================
@@ -213,11 +213,11 @@ Steamの「プロフィールを編集」＞「プライバシー設定」から
                     with col2:
                         st.caption("📋 PCの場合：押すと画像を自動コピーしてXの投稿画面を開きます。開いたXのタブで Ctrl+V（Macは⌘+V）を押して貼り付けてください。")
 
-                        # 3. 定型文とXの投稿URL（Web Share API非対応時のフォールバック用）
+                        # 3. 定型文とXの投稿URL（スマホのWeb Share API・PCのクリップボードコピー両方で使う）
                         tweet_text = f"私のSteam所持ゲーム{game_count}本のうち、積みゲー（{TSUMI_THRESHOLD_MINUTES // 60}時間以下）は【{tsumi_count}本】でした😇\nいつかやります…！\n#積みゲー晒し\n{APP_URL}"
                         tweet_url = f"https://twitter.com/intent/tweet?text={urllib.parse.quote(tweet_text)}"
 
-                        # 4. 画像をBase64化してJSに渡す（Web Share APIで画像を直接共有する）
+                        # 4. 画像をBase64化してJSに渡す（スマホは共有、PCはクリップボードコピーに使う）
                         b64_img = base64.b64encode(byte_im).decode()
                         share_html = f"""
                         <style>
@@ -344,7 +344,7 @@ else:
 - 本アプリがSteamから受け取るのは、**SteamID（公開ID）のみ**です。パスワードやメールアドレス、支払い情報等は一切取得できません。
 
 #### 取得・利用する情報
-- ログイン後、Steam公開Web API経由で**所持ゲームのリスト（ゲーム名・アイコン画像・プレイ時間）** を取得します。
+- ログイン後、Steam公開Web API経由で**所持ゲームのリスト（ゲーム名・アイコン画像・プレイ時間）**を取得します。
 - これらは積みゲー画像の合成という**その場限りの処理**のみに利用します。
 
 #### データの保存について
